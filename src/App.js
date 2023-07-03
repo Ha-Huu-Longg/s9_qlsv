@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import "./App.css"
 import { Content, Footer, Header } from 'antd/es/layout/layout';
-import { Button, Layout, Space, Input, Form, Pagination } from 'antd';
+import { Button, Layout, Space, Input, Form, Pagination, Modal } from 'antd';
 import FormStudent from "./FormStudent"
 const { Search } = Input;
 
@@ -12,10 +12,12 @@ const App = () => {
     const [studentEdit, setStudentEdit] = useState(undefined)
     const [search, setSearch] = useState("")
     const [form] = Form.useForm();
-
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize, setPageSize] = useState(10)
     const [totalPage, setTotalPage] = useState(0)
+
+    const [isOpenModalDelete, setIsOpenModalDelete] = useState(false)
+    const [studentDelete, setStudentDelete] = useState(undefined)
 
     const getToltalPage = () => {
         fetch(`http://localhost:3000/students`)
@@ -38,10 +40,14 @@ const App = () => {
             .catch(error => console.log(error))
     }
 
-    const handleDelete = (id) => {
-        fetch(`http://localhost:3000/students/${id}`, {
+    const handleDelete = () => {
+        fetch(`http://localhost:3000/students/${studentDelete.id}`, {
             method: "DELETE"
         })
+            .then(() => {
+                setIsOpenModalDelete(false)
+                setStudentDelete(undefined)
+            })
             .then(() => getData())
             .catch(error => console.log(error))
     }
@@ -53,7 +59,9 @@ const App = () => {
 
     const onCancel = () => {
         setIsOpen(false)
+        setIsOpenModalDelete(false)
         setStudentEdit(undefined)
+        setStudentDelete(undefined)
     }
 
     const onFinish = async (value) => {
@@ -78,6 +86,7 @@ const App = () => {
                 form.resetFields()
                 setIsOpen(false)
                 setStudentEdit(undefined)
+                setStudentDelete(undefined)
                 getData()
             })
             .catch(error => console.log(error))
@@ -95,6 +104,8 @@ const App = () => {
         <div className='container'>
 
             {isOpen && <FormStudent isOpen={isOpen} onCancel={onCancel} onFinish={onFinish} form={form} studentEdit={studentEdit} />}
+
+            {isOpenModalDelete && <Modal title="Student" open={isOpenModalDelete} onCancel={onCancel} maskClosable={false} onOk={handleDelete}>Bạn chắc chứ ?</Modal>}
 
             <Space
                 direction="vertical"
@@ -132,7 +143,7 @@ const App = () => {
                                             <td>{student.email}</td>
                                             <td className='btn-action'>
                                                 <Button onClick={() => handleEdit(student)}>Edit</Button>
-                                                <Button danger onClick={() => handleDelete(student.id)}>Delete</Button>
+                                                <Button danger onClick={() => { setIsOpenModalDelete(true); setStudentDelete(student) }}>Delete</Button>
                                             </td>
                                         </tr>
                                     ))}
